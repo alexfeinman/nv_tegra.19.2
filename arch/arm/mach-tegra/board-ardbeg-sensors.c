@@ -32,6 +32,7 @@
 #include <media/camera.h>
 #include <media/ar0261.h>
 #include <media/imx135.h>
+#include <media/tc358743.h>
 #include <media/dw9718.h>
 #include <media/as364x.h>
 #include <media/ov5693.h>
@@ -184,7 +185,7 @@ static struct tegra_camera_platform_data ardbeg_camera_platform_data = {
 };
 
 static struct soc_camera_link ardbeg_soc_camera_link = {
-	.bus_id         = 0, /* This must match the .id of tegra_vi01_device */
+	.bus_id         = 1, /* This must match the .id of tegra_vi01_device */
 	.add_device     = ardbeg_soc_camera_add,
 	.del_device     = ardbeg_soc_camera_del,
 	.module_name    = "soc_camera_platform",
@@ -213,9 +214,97 @@ static void ardbeg_soc_camera_del(struct soc_camera_device *icd)
 
 static struct platform_device ardbeg_soc_camera_device = {
 	.name   = "soc-camera-pdrv",
-	.id     = 0,
+	.id     = 1,
 	.dev    = {
 		.platform_data = &ardbeg_soc_camera_link,
+	},
+};
+#endif
+
+#if IS_ENABLED(CONFIG_SOC_CAMERA_IMX135)
+static int ardbeg_imx135_power(struct device *dev, int enable)
+{
+	return 0;
+}
+
+struct imx135_platform_data ardbeg_imx135_data;
+
+static struct i2c_board_info ardbeg_imx135_camera_i2c_device = {
+	I2C_BOARD_INFO("imx135_v4l2", 0x10),
+	.platform_data = &ardbeg_imx135_data,
+};
+
+static struct tegra_camera_platform_data ardbeg_imx135_camera_platform_data = {
+	.flip_v			= 0,
+	.flip_h			= 0,
+	.port			= TEGRA_CAMERA_PORT_CSI_A,
+	.lanes			= 4,
+	.continuous_clk		= 0,
+};
+
+static struct soc_camera_link imx135_iclink = {
+	.bus_id		= 0, /* This must match the .id of tegra_vi01_device */
+	.board_info	= &ardbeg_imx135_camera_i2c_device,
+	.module_name	= "imx135_v4l2",
+	.i2c_adapter_id	= 2,
+	.power		= ardbeg_imx135_power,
+	.priv		= &ardbeg_imx135_camera_platform_data,
+};
+
+static struct platform_device ardbeg_imx135_soc_camera_device = {
+	.name	= "soc-camera-pdrv",
+	.id	= 0,
+	.dev	= {
+		.platform_data = &imx135_iclink,
+	},
+};
+#endif
+
+#if IS_ENABLED(CONFIG_SOC_CAMERA_H2C)
+static int ardbeg_h2c_power(struct device *dev, int enable)
+{
+	dev_err	(dev, "%s(%d)\n", __func__, enable);
+	if ( enable ) {
+	        gpio_set_value(CAM_RSTN, 0);
+		usleep_range(10000, 20000);
+	        gpio_set_value(CAM_RSTN, 1);
+	}
+	else {
+	        gpio_set_value(CAM_RSTN, 0);
+	}
+	return 0;
+}
+
+//struct h2c_platform_data ardbeg_h2c_data;
+
+static struct i2c_board_info ardbeg_h2c_camera_i2c_device = {
+	I2C_BOARD_INFO("tc358743", 0x0f),
+	//.platform_data = &ardbeg_h2c_data,
+	//.irq = gpio_to_irq(TEGRA_GPIO_PCC1);
+};
+
+static struct tegra_camera_platform_data ardbeg_h2c_camera_platform_data = {
+	.flip_v			= 0,
+	.flip_h			= 0,
+	.port			= TEGRA_CAMERA_PORT_CSI_A,
+	.lanes			= 4,
+	.continuous_clk		= 0,
+};
+
+static struct soc_camera_link h2c_iclink = {
+	.bus_id		= 0, /* This must match the .id of tegra_vi01_device */
+	.board_info	= &ardbeg_h2c_camera_i2c_device,
+	.module_name	= "tc358743",
+	.i2c_adapter_id	= 2,
+	.power		= ardbeg_h2c_power,
+	.priv		= &ardbeg_h2c_camera_platform_data,
+};
+
+static struct platform_device ardbeg_h2c_soc_camera_device = {
+	.name	= "soc-camera-pdrv",
+	.id	= 0,
+	.dev	= {
+		.platform_data = &h2c_iclink,
 	},
 };
 #endif
@@ -463,6 +552,114 @@ struct imx135_platform_data ardbeg_imx135_data = {
 	},
 	.power_on = ardbeg_imx135_power_on,
 	.power_off = ardbeg_imx135_power_off,
+};
+
+static int ardbeg_h2c_get_extra_regulators(struct h2c_power_rail *pw)
+{
+	if (!pw->ext_reg1) {
+		pw->ext_reg1 = regulator_get(NULL, "imx135_reg1");
+		if (WARN_ON(IS_ERR(pw->ext_reg1))) {
+			pr_err("%s: can't get regulator imx135_reg1: %ld\n",
+				__func__, PTR_ERR(pw->ext_reg1));
+			pw->ext_reg1 = NULL;
+			return -ENODEV;
+		}
+	}
+
+	if (!pw->ext_reg2) {
+		pw->ext_reg2 = regulator_get(NULL, "imx135_reg2");
+		if (WARN_ON(IS_ERR(pw->ext_reg2))) {
+			pr_err("%s: can't get regulator imx135_reg2: %ld\n",
+				__func__, PTR_ERR(pw->ext_reg2));
+			pw->ext_reg2 = NULL;
+			return -ENODEV;
+		}
+	}
+
+	return 0;
+}
+
+static int ardbeg_h2c_power_on(struct h2c_power_rail *pw)
+{
+	int err;
+
+	if (unlikely(WARN_ON(!pw || !pw->iovdd || !pw->avdd)))
+		return -EFAULT;
+
+	/* disable CSIA/B IOs DPD mode to turn on camera for ardbeg */
+	tegra_io_dpd_disable(&csia_io);
+	tegra_io_dpd_disable(&csib_io);
+
+	if (ardbeg_h2c_get_extra_regulators(pw))
+		goto h2c_poweron_fail;
+
+	err = regulator_enable(pw->ext_reg1);
+	if (unlikely(err))
+		goto h2c_ext_reg1_fail;
+
+	err = regulator_enable(pw->ext_reg2);
+	if (unlikely(err))
+		goto h2c_ext_reg2_fail;
+
+
+	gpio_set_value(CAM_AF_PWDN, 1);
+	gpio_set_value(CAM1_PWDN, 0);
+	usleep_range(10, 20);
+
+	err = regulator_enable(pw->avdd);
+	if (err)
+		goto h2c_avdd_fail;
+
+	err = regulator_enable(pw->iovdd);
+	if (err)
+		goto h2c_iovdd_fail;
+
+	usleep_range(1, 2);
+	gpio_set_value(CAM1_PWDN, 1);
+
+	usleep_range(300, 310);
+
+	return 1;
+
+
+h2c_iovdd_fail:
+	regulator_disable(pw->avdd);
+
+h2c_avdd_fail:
+	if (pw->ext_reg2)
+		regulator_disable(pw->ext_reg2);
+h2c_ext_reg1_fail:
+h2c_ext_reg2_fail:
+h2c_poweron_fail:
+	tegra_io_dpd_enable(&csia_io);
+	tegra_io_dpd_enable(&csib_io);
+	pr_err("%s failed.\n", __func__);
+	return -ENODEV;
+}
+
+static int ardbeg_h2c_power_off(struct h2c_power_rail *pw)
+{
+	if (unlikely(WARN_ON(!pw || !pw->iovdd || !pw->avdd))) {
+		tegra_io_dpd_enable(&csia_io);
+		tegra_io_dpd_enable(&csib_io);
+		return -EFAULT;
+	}
+
+	regulator_disable(pw->iovdd);
+	regulator_disable(pw->avdd);
+
+	regulator_disable(pw->ext_reg1);
+	regulator_disable(pw->ext_reg2);
+
+	/* put CSIA/B IOs into DPD mode to save additional power for ardbeg */
+	tegra_io_dpd_enable(&csia_io);
+	tegra_io_dpd_enable(&csib_io);
+	return 0;
+}
+
+struct h2c_platform_data ardbeg_h2c_data = {
+	.power_on = ardbeg_h2c_power_on,
+	.power_off = ardbeg_h2c_power_off,
 };
 
 static int ardbeg_dw9718_power_on(struct dw9718_power_rail *pw)
@@ -843,6 +1040,11 @@ static struct i2c_board_info	ardbeg_i2c_board_info_as3648 = {
 		.platform_data = &ardbeg_as3648_data,
 };
 
+static struct i2c_board_info    ardbeg_i2c_board_info_uh2c = {
+                I2C_BOARD_INFO("uh2c", 0x0f),
+//                .platform_data = &ardbeg_uh2c_data,
+};
+
 static struct camera_module ardbeg_camera_module_info[] = {
 	/* E1823 camera board */
 	{
@@ -872,6 +1074,10 @@ static struct camera_module ardbeg_camera_module_info[] = {
 		/* front camera */
 		.sensor = &ardbeg_i2c_board_info_mt9m114,
 	},
+	/* UH2C * */
+	{
+		.sensor = &ardbeg_i2c_board_info_uh2c,
+	},
 
 	{}
 };
@@ -896,6 +1102,12 @@ static int ardbeg_camera_init(void)
 	tegra_io_dpd_enable(&csia_io);
 	tegra_io_dpd_enable(&csib_io);
 	tegra_io_dpd_enable(&csie_io);
+	gpio_request(TEGRA_GPIO_PCC1, "h2c_irq");
+	gpio_direction_input(TEGRA_GPIO_PCC1);
+
+	gpio_request(CAM_RSTN, "CAM_RST_N");
+	gpio_direction_output(CAM_RSTN, 0);
+	gpio_export(CAM_RSTN, false);
 
 	platform_device_add_data(&ardbeg_camera_generic,
 		&ardbeg_pcl_pdata, sizeof(ardbeg_pcl_pdata));
@@ -903,6 +1115,16 @@ static int ardbeg_camera_init(void)
 
 #if IS_ENABLED(CONFIG_SOC_CAMERA_PLATFORM)
 	platform_device_register(&ardbeg_soc_camera_device);
+#endif
+
+#if IS_ENABLED(CONFIG_SOC_CAMERA_IMX135)
+	platform_device_register(&ardbeg_imx135_soc_camera_device);
+#endif
+
+#if IS_ENABLED(CONFIG_SOC_CAMERA_H2C)
+	((struct soc_camera_link*)ardbeg_h2c_soc_camera_device.dev.platform_data)->board_info->
+		irq = gpio_to_irq(TEGRA_GPIO_PCC1);
+	platform_device_register(&ardbeg_h2c_soc_camera_device);
 #endif
 
 	return 0;

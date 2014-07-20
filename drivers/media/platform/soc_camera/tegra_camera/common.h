@@ -110,6 +110,10 @@ struct tegra_camera_dev {
 
 	/* Test Pattern Generator mode */
 	int				tpg_mode;
+
+	int				sof;
+	struct clk		*clk_mipi_cal;
+	struct clk		*clk_72mhz;
 };
 
 #define TC_VI_REG_RD(dev, offset) readl(dev->reg_base + offset)

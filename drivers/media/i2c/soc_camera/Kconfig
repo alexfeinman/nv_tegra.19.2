@@ -6,6 +6,12 @@ config SOC_CAMERA_IMX074
 	help
 	  This driver supports IMX074 cameras from Sony
 
+config SOC_CAMERA_IMX135
+        tristate "IMX135 camera sensor support"
+	depends on SOC_CAMERA && I2C
+	help
+	  This driver supports IMX135 cameras from Sony
+
 config SOC_CAMERA_MT9M001
 	tristate "mt9m001 support"
 	depends on SOC_CAMERA && I2C
@@ -97,3 +103,16 @@ config SOC_CAMERA_TW9910
 	depends on SOC_CAMERA && I2C
 	help
 	  This is a tw9910 video driver
+
+config SOC_CAMERA_UH2C
+        tristate "Toshiba UH2C support"
+        depends on SOC_CAMERA && I2C
+        help
+          This is a Toshiba UH2C video driver
+
+config SOC_CAMERA_H2C
+        tristate "Toshiba H2C support"
+        depends on SOC_CAMERA && I2C
+        help
+          This is a Toshiba H2C video driver
+

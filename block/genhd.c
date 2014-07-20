@@ -765,8 +765,9 @@ void __init printk_all_partitions(void)
 		while ((part = disk_part_iter_next(&piter))) {
 			bool is_part0 = part == &disk->part0;
 
-			printk("%s%s %10llu %s %s", is_part0 ? "" : "  ",
+			printk("%s%s %10llu %10llu %s %s", is_part0 ? "" : "  ",
 			       bdevt_str(part_devt(part), devt_buf),
+			       (unsigned long long)part->start_sect,
 			       (unsigned long long)part_nr_sects_read(part) >> 1
 			       , disk_name(disk, part->partno, name_buf),
 			       part->info ? part->info->uuid : "");

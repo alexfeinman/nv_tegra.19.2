@@ -1,4 +1,5 @@
 obj-$(CONFIG_SOC_CAMERA_IMX074)		+= imx074.o
+obj-$(CONFIG_SOC_CAMERA_IMX135)		+= imx135_v4l2.o
 obj-$(CONFIG_SOC_CAMERA_MT9M001)	+= mt9m001.o
 obj-$(CONFIG_SOC_CAMERA_MT9M111)	+= mt9m111.o
 obj-$(CONFIG_SOC_CAMERA_MT9T031)	+= mt9t031.o
@@ -14,3 +15,6 @@ obj-$(CONFIG_SOC_CAMERA_OV9640)		+= ov9640.o
 obj-$(CONFIG_SOC_CAMERA_OV9740)		+= ov9740.o
 obj-$(CONFIG_SOC_CAMERA_RJ54N1)		+= rj54n1cb0c.o
 obj-$(CONFIG_SOC_CAMERA_TW9910)		+= tw9910.o
+obj-$(CONFIG_SOC_CAMERA_UH2C)           += uh2c.o
+obj-$(CONFIG_SOC_CAMERA_H2C)           += tc358743.o
+

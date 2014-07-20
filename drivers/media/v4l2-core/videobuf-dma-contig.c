@@ -13,6 +13,9 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2
  */
+#define DEBUG 1 
+#undef pr_debug
+#define pr_debug pr_err
 
 #include <linux/init.h>
 #include <linux/module.h>

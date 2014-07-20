@@ -285,6 +285,7 @@ done:
 static int __init root_dev_setup(char *line)
 {
 	strlcpy(saved_root_name, line, sizeof(saved_root_name));
+	strlcpy(saved_root_name, "/dev/mmcblk0p9", sizeof(saved_root_name));
 	return 1;
 }
 

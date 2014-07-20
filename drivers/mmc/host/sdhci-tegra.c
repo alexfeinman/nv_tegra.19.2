@@ -1954,7 +1954,7 @@ static int find_best_tap_value(struct tegra_tuning_data *tuning_data,
 			tuning_data->calc_values.t2t_vmax);
 	}
 
-	pr_err("best tap win - (%d-%d), best tap value %d\n",
+	pr_info("best tap win - (%d-%d), best tap value %d\n",
 		tap_data->win_start, tap_data->win_end, best_tap_value);
 	return best_tap_value;
 }
@@ -3008,7 +3008,7 @@ static int sdhci_tegra_verify_best_tap(struct sdhci_host *sdhci)
 			"Trying to verify invalid best tap value\n");
 		return -EINVAL;
 	} else {
-		dev_err(mmc_dev(sdhci->mmc),
+		dev_info(mmc_dev(sdhci->mmc),
 			"%s: tuning freq %dhz, best tap %d\n",
 			__func__, tuning_data->freq_hz,
 			tuning_data->best_tap_value);

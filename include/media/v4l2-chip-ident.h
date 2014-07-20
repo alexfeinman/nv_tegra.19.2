@@ -40,6 +40,7 @@ enum {
 
 	/* Sony IMX074 */
 	V4L2_IDENT_IMX074 = 74,
+	V4L2_IDENT_IMX135 = 75,
 
 	/* module saa7110: just ident 100 */
 	V4L2_IDENT_SAA7110 = 100,
@@ -348,6 +349,8 @@ enum {
 	/* module upd64083: just ident 64083 */
 	V4L2_IDENT_UPD64083 = 64083,
 
+	V4L2_IDENT_TC358743 = 65533,
+	V4L2_IDENT_UH2C = 65534,
 	/* Don't just add new IDs at the end: KEEP THIS LIST ORDERED BY ID! */
 };
 
