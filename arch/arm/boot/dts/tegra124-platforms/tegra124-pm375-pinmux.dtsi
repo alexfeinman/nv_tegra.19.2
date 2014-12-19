@@ -1028,7 +1028,7 @@
 		pcc1 {
 			nvidia,pins = "pcc1";
 			nvidia,function = "safe";
-			nvidia,enable-input = <TEGRA_PIN_INPUT>;
+			nvidia,enable-input = <TEGRA_PIN_OUTPUT>;
 			nvidia,pull = <TEGRA_PIN_PUPD_PULL_DOWN>;
 			nvidia,tristate = <TEGRA_PIN_NORMAL>;
 		};

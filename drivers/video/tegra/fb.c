@@ -113,7 +113,7 @@ static int tegra_fb_set_par(struct fb_info *info)
 	struct tegra_fb_info *tegra_fb = info->par;
 	struct fb_var_screeninfo *var = &info->var;
 	struct tegra_dc *dc = tegra_fb->win->dc;
-
+printk(KERN_ERR "%s: bpp=%d\n", __func__, var->bits_per_pixel);
 	if (var->bits_per_pixel) {
 		/* we only support RGB ordering for now */
 		switch (var->bits_per_pixel) {
@@ -646,6 +646,7 @@ struct tegra_fb_info *tegra_fb_register(struct platform_device *ndev,
 		tegra_fb->valid = true;
 	}
 
+printk(KERN_ERR "%s: bpp=%d\n", __func__, fb_data->bits_per_pixel);
 	info->fix.line_length = fb_data->xres * fb_data->bits_per_pixel / 8;
 
 	stride = tegra_dc_get_stride(dc, 0);

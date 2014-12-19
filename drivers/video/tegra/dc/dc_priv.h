@@ -76,8 +76,10 @@ static inline void tegra_dc_writel(struct tegra_dc *dc, unsigned long val,
 
 	if (WARN(!tegra_is_clk_enabled(dc->clk), "DC is clock-gated.\n") ||
 		WARN(!tegra_powergate_is_powered(dc->powergate_id),
-			"DC is power-gated.\n"))
+			"DC is power-gated.\n")) {
+		dev_err(&dc->ndev->dev, "Cowardly refusing to write to a powergated block\n");
 		return;
+	}
 
 	trace_display_writel(dc, val, dc->base + reg * 4);
 	writel(val, dc->base + reg * 4);

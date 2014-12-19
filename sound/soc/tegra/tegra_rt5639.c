@@ -762,7 +762,7 @@ static int tegra_rt5639_jack_notifier(struct notifier_block *self,
 		state = BIT_NO_HEADSET;
 	}
 
-	switch_set_state(&tegra_rt5639_headset_switch, state);
+	switch_set_state(&tegra_rt5639_headset_switch, !state);
 
 	return NOTIFY_OK;
 }
@@ -975,7 +975,7 @@ static struct snd_soc_dai_link tegra_rt5639_dai[NUM_DAI_LINKS] = {
 	[DAI_LINK_BTSCO] = {
 		.name = "BT-SCO",
 		.stream_name = "BT SCO PCM",
-		.codec_name = "spdif-dit.1",
+		.codec_name = "spdif-dit.0",
 		.platform_name = "tegra-pcm-audio",
 		.cpu_dai_name = "tegra30-i2s.3",
 		.codec_dai_name = "dit-hifi",
@@ -1165,12 +1165,13 @@ static int tegra_rt5639_driver_probe(struct platform_device *pdev)
 		pdata->i2s_param[HIFI_CODEC].audio_port_id = (int)val32[0];
 		pdata->i2s_param[HIFI_CODEC].is_i2s_master = (int)val32[1];
 		pdata->i2s_param[HIFI_CODEC].i2s_mode = (int)val32[2];
-
+/*
 		of_property_read_u32_array(np, "nvidia,i2s-param-bt", val32,
 							   ARRAY_SIZE(val32));
 		pdata->i2s_param[BT_SCO].audio_port_id = (int)val32[0];
 		pdata->i2s_param[BT_SCO].is_i2s_master = (int)val32[1];
 		pdata->i2s_param[BT_SCO].i2s_mode = (int)val32[2];
+*/
 	}
 
 	if (!pdata) {
@@ -1302,11 +1303,12 @@ static int tegra_rt5639_driver_probe(struct platform_device *pdev)
 	tegra_rt5639_i2s_dai_name[codec_id];
 	tegra_rt5639_dai[DAI_LINK_BTSCO].platform_name =
 	tegra_rt5639_i2s_dai_name[codec_id];
-
+#if 0
 	tegra_rt5639_dai[DAI_LINK_VOICE_CALL].platform_name =
 	tegra_rt5639_i2s_dai_name[machine->codec_info[HIFI_CODEC].i2s_id];
 	tegra_rt5639_dai[DAI_LINK_BT_VOICE_CALL].platform_name =
 	tegra_rt5639_i2s_dai_name[machine->codec_info[BT_SCO].i2s_id];
+#endif
 #endif
 
 	card->dapm.idle_bias_off = 1;

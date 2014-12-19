@@ -6755,6 +6755,14 @@ static struct clk tegra_pll_d2 = {
 	},
 };
 
+static struct clk tegra_pll_d2_out0 = {
+	.name      = "pll_d2_out0",
+	.ops       = &tegra_pll_div_ops,
+	.flags     = DIV_2 | PLLD,
+	.parent    = &tegra_pll_d2,
+	.max_rate  = 500000000,
+};
+
 static struct clk tegra_pll_re_vco = {
 	.name      = "pll_re_vco",
 	.flags     = PLL_ALT_MISC_REG,
@@ -7288,6 +7296,12 @@ static struct clk_mux_sel mux_pllp_pllm_plld_plla_pllc_plld2_clkm[] = {
 	{.input = &tegra_pll_c, .value = 4},
 	{.input = &tegra_pll_d2, .value = 5},
 	{.input = &tegra_clk_m, .value = 6},
+	{ 0, 0},
+};
+
+static struct clk_mux_sel mux_plld_out0_plld2_out0[] = {
+	{ .input = &tegra_pll_d_out0,  .value = 0},
+	{ .input = &tegra_pll_d2_out0, .value = 1},
 	{ 0, 0},
 };
 
@@ -8012,8 +8026,8 @@ struct clk tegra_list_clks[] = {
 	PERIPH_CLK("usbd",	"tegra-udc.0",		NULL,	22,	0,	480000000, mux_clk_m,			0),
 	PERIPH_CLK("usb2",	"tegra-ehci.1",		NULL,	58,	0,	480000000, mux_clk_m,			0),
 	PERIPH_CLK("usb3",	"tegra-ehci.2",		NULL,	59,	0,	480000000, mux_clk_m,			0),
-	PERIPH_CLK_EX("dsia",	"tegradc.0",		"dsia",	48,	0xd0,	750000000, mux_plld_out0,		PLLD,	&tegra_dsi_clk_ops),
-	PERIPH_CLK_EX("dsib",	"tegradc.1",		"dsib",	82,	0x4b8,	750000000, mux_plld_out0,		PLLD,	&tegra_dsi_clk_ops),
+	PERIPH_CLK_EX("dsia",	"tegradc.0",		"dsia",	48,	0xd0,	750000000, mux_plld_out0_plld2_out0,		PLLD,	&tegra_dsi_clk_ops),
+	PERIPH_CLK_EX("dsib",	"tegradc.1",		"dsib",	82,	0x4b8,	750000000, mux_plld_out0_plld2_out0,		PLLD,	&tegra_dsi_clk_ops),
 	PERIPH_CLK("dsi1-fixed", "tegradc.0",		"dsi-fixed",	0,	0,	108000000, mux_pllp_out3,	PERIPH_NO_ENB),
 	PERIPH_CLK("dsi2-fixed", "tegradc.1",		"dsi-fixed",	0,	0,	108000000, mux_pllp_out3,	PERIPH_NO_ENB),
 	PERIPH_CLK("csi",	"vi",			"csi",	52,	0,	750000000, mux_plld,			PLLD),
@@ -8405,6 +8419,7 @@ struct clk *tegra_ptr_clks[] = {
 	&tegra_pll_a_out0,
 	&tegra_pll_d,
 	&tegra_pll_d_out0,
+	&tegra_pll_d2_out0,
 	&tegra_clk_xusb_gate,
 	&tegra_pll_u,
 	&tegra_pll_u_480M,

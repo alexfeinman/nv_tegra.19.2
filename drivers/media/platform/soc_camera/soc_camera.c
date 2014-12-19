@@ -15,7 +15,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+#define DEBUG 1
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
@@ -179,7 +179,7 @@ static int soc_camera_try_fmt(struct soc_camera_device *icd,
 	struct v4l2_pix_format *pix = &f->fmt.pix;
 	int ret;
 
-	dev_dbg(icd->pdev, "TRY_FMT(%c%c%c%c, %ux%u)\n",
+	dev_err(icd->pdev, "TRY_FMT(%c%c%c%c, %ux%u)\n",
 		pixfmtstr(pix->pixelformat), pix->width, pix->height);
 
 	if (pix->pixelformat != V4L2_PIX_FMT_JPEG &&
@@ -421,7 +421,7 @@ static int soc_camera_init_user_formats(struct soc_camera_device *icd)
 	if (!icd->user_formats)
 		return -ENOMEM;
 
-	dev_dbg(icd->pdev, "Found %d supported formats.\n", fmts);
+	dev_err(icd->pdev, "Found %d supported formats.\n", fmts);
 
 	/* Second pass - actually fill data formats */
 	fmts = 0;
@@ -471,7 +471,7 @@ static int soc_camera_set_fmt(struct soc_camera_device *icd,
 	struct v4l2_pix_format *pix = &f->fmt.pix;
 	int ret;
 
-	dev_dbg(icd->pdev, "S_FMT(%c%c%c%c, %ux%u)\n",
+	dev_err(icd->pdev, "S_FMT(%c%c%c%c, %ux%u)\n",
 		pixfmtstr(pix->pixelformat), pix->width, pix->height);
 
 	/* We always call try_fmt() before set_fmt() or set_crop() */
@@ -498,7 +498,7 @@ static int soc_camera_set_fmt(struct soc_camera_device *icd,
 	if (ici->ops->init_videobuf)
 		icd->vb_vidq.field = pix->field;
 
-	dev_dbg(icd->pdev, "set width: %d height: %d\n",
+	dev_err(icd->pdev, "set width: %d height: %d\n",
 		icd->user_width, icd->user_height);
 
 	/* set physical bus parameters */
@@ -813,7 +813,7 @@ static int soc_camera_g_fmt_vid_cap(struct file *file, void *priv,
 	pix->field		= icd->field;
 	pix->pixelformat	= icd->current_fmt->host_fmt->fourcc;
 	pix->colorspace		= icd->colorspace;
-	dev_dbg(icd->pdev, "current_fmt->fourcc: 0x%08x\n",
+	dev_err(icd->pdev, "current_fmt->fourcc: 0x%08x\n",
 		icd->current_fmt->host_fmt->fourcc);
 	return 0;
 }
@@ -846,14 +846,14 @@ static int soc_camera_streamon(struct file *file, void *priv,
 	if (icd->streamer != file)
 		return -EBUSY;
 
+//	if (!ret)
+		v4l2_subdev_call(sd, video, s_stream, 1);
+
 	/* This calls buf_queue from host driver's videobuf_queue_ops */
 	if (ici->ops->init_videobuf)
 		ret = videobuf_streamon(&icd->vb_vidq);
 	else
 		ret = vb2_streamon(&icd->vb2_vidq, i);
-
-	if (!ret)
-		v4l2_subdev_call(sd, video, s_stream, 1);
 
 	return ret;
 }
@@ -1017,10 +1017,11 @@ static int soc_camera_g_parm(struct file *file, void *fh,
 {
 	struct soc_camera_device *icd = file->private_data;
 	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
-
+printk(KERN_ERR "%s\n", __func__);
 	if (ici->ops->get_parm)
 		return ici->ops->get_parm(icd, a);
 
+printk(KERN_ERR "%s failed\n", __func__);
 	return -ENOIOCTLCMD;
 }
 
@@ -1030,9 +1031,11 @@ static int soc_camera_s_parm(struct file *file, void *fh,
 	struct soc_camera_device *icd = file->private_data;
 	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
 
+printk(KERN_ERR "%s\n", __func__);
 	if (ici->ops->set_parm)
 		return ici->ops->set_parm(icd, a);
 
+printk(KERN_ERR "%s failed\n", __func__);
 	return -ENOIOCTLCMD;
 }
 
@@ -1041,9 +1044,27 @@ static int soc_camera_g_chip_ident(struct file *file, void *fh,
 {
 	struct soc_camera_device *icd = file->private_data;
 	struct v4l2_subdev *sd = soc_camera_to_subdev(icd);
+printk(KERN_ERR "%s\n", __func__);
 
 	return v4l2_subdev_call(sd, core, g_chip_ident, id);
 }
+
+int soc_camera_enum_frameintervals (struct file *file, void *fh,
+                                           struct v4l2_frmivalenum *fival)
+{
+	struct soc_camera_device *icd = file->private_data;
+	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
+
+	if ( fival->index > 0 )
+		return -EINVAL;
+printk(KERN_ERR "%s\n", __func__);
+	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
+	fival->discrete.numerator =
+			1;
+	fival->discrete.denominator = 30;	
+	return 0;
+}                                          
+
 
 #ifdef CONFIG_VIDEO_ADV_DEBUG
 static int soc_camera_g_register(struct file *file, void *fh,
@@ -1468,6 +1489,15 @@ static int soc_camera_device_register(struct soc_camera_device *icd)
 	return 0;
 }
 
+int soc_camera_exp_buf(struct file *file, void* priv, struct v4l2_exportbuffer *eb)
+{
+        struct soc_camera_device *icd = file->private_data;
+        struct vb2_queue *vq = &icd->vb2_vidq;
+printk(KERN_ERR "%s\n", __func__);
+        return vb2_expbuf(vq, eb);
+}
+
+
 static const struct v4l2_ioctl_ops soc_camera_ioctl_ops = {
 	.vidioc_querycap	 = soc_camera_querycap,
 	.vidioc_try_fmt_vid_cap  = soc_camera_try_fmt_vid_cap,
@@ -1495,7 +1525,10 @@ static const struct v4l2_ioctl_ops soc_camera_ioctl_ops = {
 	.vidioc_s_selection	 = soc_camera_s_selection,
 	.vidioc_g_parm		 = soc_camera_g_parm,
 	.vidioc_s_parm		 = soc_camera_s_parm,
-	.vidioc_g_chip_ident     = soc_camera_g_chip_ident,
+	.vidioc_g_chip_ident = soc_camera_g_chip_ident,
+	.vidioc_expbuf		 = soc_camera_exp_buf,
+	.vidioc_enum_frameintervals = soc_camera_enum_frameintervals,
+
 #ifdef CONFIG_VIDEO_ADV_DEBUG
 	.vidioc_g_register	 = soc_camera_g_register,
 	.vidioc_s_register	 = soc_camera_s_register,

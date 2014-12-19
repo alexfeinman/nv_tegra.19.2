@@ -774,6 +774,7 @@ void tegra_io_dpd_enable(struct tegra_io_dpd *hnd)
 			(hnd->io_dpd_reg_index + 1), dpd_status);
 		}
 	}
+	pr_err("%s: new DPD for idx %d value: %08x\n", hnd->name, hnd->io_dpd_reg_index, dpd_status);
 	/* Sample register must be reset before next sample operation */
 	writel(0x0, pmc + PMC_DPD_SAMPLE);
 	spin_unlock(&tegra_io_dpd_lock);
@@ -803,6 +804,7 @@ void tegra_io_dpd_disable(struct tegra_io_dpd *hnd)
 			(hnd->io_dpd_reg_index + 1), dpd_status);
 		}
 	}
+    pr_err("%s: new DPD for idx %d value: %08x\n", hnd->name, hnd->io_dpd_reg_index, dpd_status);
 	spin_unlock(&tegra_io_dpd_lock);
 	return;
 }

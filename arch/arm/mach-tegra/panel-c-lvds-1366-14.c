@@ -317,7 +317,7 @@ static struct tegra_dc_out_pin lvds_out_pins[] = {
 
 static struct tegra_dc_mode lvds_c_1366_14_modes[] = {
 	{
-		.pclk = 74720100, /* 1366 x 768 @ 60hz */
+		.pclk = 74250000, /* 1366 x 768 @ 60hz */
 		.h_ref_to_sync = 1,
 		.v_ref_to_sync = 1,
 		.h_sync_width = 45,
@@ -406,7 +406,7 @@ static void lvds_c_1366_14_dc_out_init(struct tegra_dc_out *dc)
 	dc->out_pins = lvds_out_pins,
 	dc->n_out_pins = ARRAY_SIZE(lvds_out_pins),
 	dc->depth = 18,
-	dc->parent_clk = "pll_d_out0";
+	dc->parent_clk = "pll_a";
 	dc->enable = lvds_c_1366_14_enable;
 	dc->disable = lvds_c_1366_14_disable;
 	dc->postsuspend	= lvds_c_1366_14_postsuspend,

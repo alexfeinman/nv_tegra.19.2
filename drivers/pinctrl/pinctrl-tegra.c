@@ -1462,6 +1462,9 @@ void tegra_pinctrl_pg_config_pingroup(
 	const struct tegra_pingroup *g;
 	int err;
 
+trace_printk("Config pingroup %d, func %d, od: %d\n", pg, func, od);
+printk("%s: Config pingroup %d, func %d, od: %d\n", __func__, pg, func, od);
+
 	if (!pmx) {
 		pr_err("Pingroup not registered yet\n");
 		return;

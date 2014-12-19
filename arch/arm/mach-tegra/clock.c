@@ -523,10 +523,12 @@ int clk_set_rate_locked(struct clk *c, unsigned long rate)
 		return -ENOSYS;
 
 	old_rate = clk_get_rate_locked(c);
-
 	max_rate = clk_get_max_rate(c);
 	if (rate > max_rate)
 		rate = max_rate;
+
+	if ( strcmp(c->name, "dfll_cpu") != 0 )
+		trace_printk("%s: changing rate from %lu to %lu\n", c->name, old_rate, rate);
 
 	if (c->ops && c->ops->round_rate) {
 		new_rate = c->ops->round_rate(c, rate);
@@ -535,6 +537,9 @@ int clk_set_rate_locked(struct clk *c, unsigned long rate)
 			ret = new_rate;
 			return ret;
 		}
+
+	if ( strcmp(c->name, "dfll_cpu") != 0 )
+		trace_printk("%s: adjusted new rate from %lu to %lu\n", c->name, rate, new_rate);
 
 		rate = new_rate;
 	}

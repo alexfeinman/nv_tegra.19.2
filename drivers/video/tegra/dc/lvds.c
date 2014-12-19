@@ -18,6 +18,7 @@
 #include <linux/kernel.h>
 
 #include <mach/dc.h>
+#include <mach/../../clock.h>
 
 #include "lvds.h"
 #include "dc_priv.h"
@@ -107,9 +108,13 @@ static long tegra_dc_lvds_setup_clk(struct tegra_dc *dc, struct clk *clk)
 	struct tegra_dc_lvds_data *lvds = tegra_dc_get_outdata(dc);
 	struct clk	*parent_clk;
 
+pr_err("Setting pll_d2 as a parent for %s\n", clk->name);
+	parent_clk = clk_get_sys(NULL, "pll_d2_out0"); //clk_get_parent(clk);
+pr_err("Current rate is %lu\n", clk_get_rate(clk));
+	clk_set_parent(clk, parent_clk);
+
 	tegra_dc_sor_setup_clk(lvds->sor, clk, true);
 
-	parent_clk = clk_get_parent(clk);
 	if (clk_get_parent(lvds->sor->sor_clk) != parent_clk)
 		clk_set_parent(lvds->sor->sor_clk, parent_clk);
 

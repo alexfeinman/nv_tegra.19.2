@@ -84,9 +84,9 @@ void shield_sysedp_batmon_init(void);
 
 #define CAM_RSTN TEGRA_GPIO_PBB3
 #define CAM_FLASH_STROBE TEGRA_GPIO_PBB4
-#define CAM2_PWDN TEGRA_GPIO_PBB6
+#define CAM2_PWDN TEGRA_GPIO_PBB1
 #define CAM1_PWDN TEGRA_GPIO_PBB5
-#define CAM_AF_PWDN TEGRA_GPIO_PBB7
+#define CAM_AF_PWDN TEGRA_GPIO_PBB2
 #define CAM_BOARD_E1806
 
 /* Modem related GPIOs */

@@ -10,8 +10,6 @@
  * the Free Software Foundation.
  */
 
-#define DEBUG 1
-
 #include <linux/dma-buf.h>
 #include <linux/module.h>
 #include <linux/scatterlist.h>
@@ -22,9 +20,6 @@
 #include <media/videobuf2-core.h>
 #include <media/videobuf2-dma-contig.h>
 #include <media/videobuf2-memops.h>
-
-#undef pr_debug
-#define pr_debug pr_err
 
 struct vb2_dc_conf {
 	struct device		*dev;

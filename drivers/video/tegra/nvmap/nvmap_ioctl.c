@@ -592,6 +592,7 @@ int nvmap_ioctl_rw_handle(struct file *filp, int is_read, void __user* arg)
 		return -EFAULT;
 
 	handle = unmarshal_user_handle(op.handle);
+//printk(KERN_ERR "%s: handle: %lu op.addr:%08lu  op.count:%u op.elem_size:%d\n", __func__, handle, op.addr, op.count, op.elem_size);
 	if (!handle || !op.addr || !op.count || !op.elem_size)
 		return -EINVAL;
 

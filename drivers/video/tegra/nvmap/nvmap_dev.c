@@ -756,6 +756,8 @@ static long nvmap_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 	case NVMAP_IOC_MMAP:
 		err = nvmap_map_into_caller_ptr(filp, uarg);
+		if ( err ) 
+			printk("%s: NVMAP_IOC_MMAP: %d\n", __func__, err);
 		break;
 
 	case NVMAP_IOC_WRITE:

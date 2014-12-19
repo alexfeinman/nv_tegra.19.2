@@ -78,14 +78,16 @@ static struct regulator_consumer_supply as3722_ldo0_supply[] = {
 static struct regulator_consumer_supply as3722_ldo1_supply[] = {
 	REGULATOR_SUPPLY("vdd_cam1_1v8_cam", NULL),
 	REGULATOR_SUPPLY("vdd_cam2_1v8_cam", NULL),
+	REGULATOR_SUPPLY("vif", "2-000f"),
 	REGULATOR_SUPPLY("vif", "2-0010"),
-	REGULATOR_SUPPLY("vif", "2-0036"),
+	REGULATOR_SUPPLY("vif", "2-001f"),
 	REGULATOR_SUPPLY("vdd_i2c", "2-000c"),
 	REGULATOR_SUPPLY("vi2c", "2-0030"),
 	REGULATOR_SUPPLY("vif2", "2-0021"),
 	REGULATOR_SUPPLY("dovdd", "2-0010"),
+	REGULATOR_SUPPLY("dovdd", "2-000f"),
+	REGULATOR_SUPPLY("dovdd", "2-001f"),
 	REGULATOR_SUPPLY("vdd", "2-004a"),
-	REGULATOR_SUPPLY("vif", "2-0048"),
 };
 
 static struct regulator_consumer_supply as3722_ldo2_supply[] = {
@@ -112,12 +114,16 @@ static struct regulator_consumer_supply as3722_ldo4_supply[] = {
 	REGULATOR_SUPPLY("avdd_cam2_cam", NULL),
 	REGULATOR_SUPPLY("avdd_cam3_cam", NULL),
 	REGULATOR_SUPPLY("vana", "2-0010"),
+	REGULATOR_SUPPLY("vana", "2-001f"),
+	REGULATOR_SUPPLY("vana", "2-000f"),
 	REGULATOR_SUPPLY("avdd_ov5693", "2-0010"),
 };
 
 static struct regulator_consumer_supply as3722_ldo5_supply[] = {
 	REGULATOR_SUPPLY("vdd_1v2_cam", NULL),
 	REGULATOR_SUPPLY("vdig", "2-0010"),
+	REGULATOR_SUPPLY("vdig", "2-001f"),
+	REGULATOR_SUPPLY("vdig", "2-000f"),
 	REGULATOR_SUPPLY("vdig", "2-0036"),
 };
 
@@ -237,7 +243,7 @@ AMS_PDATA_INIT(sd4, NULL, 1050000, 1050000, 0, 1, 1, 0);
 AMS_PDATA_INIT(sd5, NULL, 1800000, 1800000, 1, 1, 1, 0);
 AMS_PDATA_INIT(sd6, NULL, 650000, 1400000, 0, 1, 0, 0);
 AMS_PDATA_INIT(ldo0, AS3722_SUPPLY(sd2), 1050000, 1250000, 1, 1, 1, AS3722_EXT_CONTROL_ENABLE1);
-AMS_PDATA_INIT(ldo1, NULL, 1800000, 1800000, 0, 1, 1, 0);
+AMS_PDATA_INIT(ldo1, NULL, 1800000, 1800000, 1, 1, 1, 0);
 AMS_PDATA_INIT(ldo2, AS3722_SUPPLY(sd5), 1200000, 1200000, 0, 0, 1, 0);
 AMS_PDATA_INIT(ldo3, NULL, 800000, 800000, 1, 1, 1, 0);
 AMS_PDATA_INIT(ldo4, NULL, 2700000, 2700000, 0, 0, 1, 0);
@@ -312,6 +318,7 @@ int __init ardbeg_as3722_regulator_init(void)
 	u32 pmc_ctrl;
 	struct board_info board_info;
 
+	pr_err("%s\n", __func__);
 	/* AS3722: Normal state of INT request line is LOW.
 	 * configure the power management controller to trigger PMU
 	 * interrupts when HIGH.
@@ -349,6 +356,7 @@ int __init ardbeg_as3722_regulator_init(void)
 
 int __init ardbeg_ams_regulator_init(void)
 {
+	pr_err("%s\n", __func__);
 	ardbeg_as3722_regulator_init();
 	return 0;
 }

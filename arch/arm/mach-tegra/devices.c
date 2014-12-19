@@ -453,7 +453,8 @@ static struct tegra_i2c_platform_data tegra_i2c2_platform_data = {
 };
 
 static struct tegra_i2c_platform_data tegra_i2c3_platform_data = {
-	.bus_clk_rate   = 400000,
+	.bus_clk_rate   = 1000000,
+	.is_high_speed_enable = true,
 };
 
 static struct tegra_i2c_platform_data tegra_dvc_platform_data = {

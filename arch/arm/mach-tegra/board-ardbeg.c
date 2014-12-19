@@ -363,17 +363,19 @@ static struct tegra_asoc_platform_data ardbeg_audio_pdata_rt5639 = {
 	},
 	.i2s_param[BT_SCO] = {
 		.audio_port_id = 3,
-		.is_i2s_master = 1,
-		.i2s_mode = TEGRA_DAIFMT_DSP_A,
+		.is_i2s_master = 0,
+		.i2s_mode = TEGRA_DAIFMT_I2S,
+		.sample_size	= 16,
+		.channels       = 2,
 	},
 	.i2s_param[BASEBAND]	= {
-		.audio_port_id	= 0,
+		.audio_port_id	= 2,
 		.is_i2s_master	= 1,
 		.i2s_mode	= TEGRA_DAIFMT_I2S,
 		.sample_size	= 16,
-		.rate		= 16000,
+		.rate		= 48000,
 		.channels	= 2,
-		.bit_clk	= 1024000,
+//		.bit_clk	= 1024000,
 	},
 };
 
@@ -390,6 +392,18 @@ static struct tegra_asoc_platform_data laguna_audio_pdata_max98090 = {
 		.channels       = 2,
 		.bit_clk        = 1536000,
 	},
+};
+
+static struct tegra_pingroup_config i2s4_enable[] = {
+        DEFAULT_PINMUX(GPIO_PBB6, I2S4, NORMAL, TRISTATE, OUTPUT),
+        DEFAULT_PINMUX(GPIO_PBB7, I2S4, NORMAL, NORMAL, OUTPUT),
+        DEFAULT_PINMUX(GPIO_PCC1, I2S4, NORMAL, TRISTATE, OUTPUT),
+        DEFAULT_PINMUX(GPIO_PCC2, I2S4, PULL_DOWN, TRISTATE, OUTPUT),
+};
+
+static struct tegra_pingroup_config pbb3_enable[] = {
+        GPIO_PINMUX_NON_OD(GPIO_PBB3, NORMAL, NORMAL, OUTPUT),
+        GPIO_PINMUX_NON_OD(GPIO_PBB5, NORMAL, NORMAL, OUTPUT),
 };
 
 static void ardbeg_audio_init(void)
@@ -434,6 +448,10 @@ static void ardbeg_audio_init(void)
 
 	laguna_audio_pdata_max98090.codec_name = "max98090.7-0010";
 	laguna_audio_pdata_max98090.codec_dai_name = "HiFi";
+
+	//tegra_pinmux_config_table(i2s4_enable, 4);
+	tegra_pinmux_config_table(pbb3_enable, 2);
+
 }
 
 static struct platform_device ardbeg_audio_device_rt5639 = {
@@ -566,7 +584,7 @@ static struct platform_device *ardbeg_devices[] __initdata = {
 };
 
 static struct tegra_usb_platform_data tegra_udc_pdata = {
-	.port_otg = true,
+	.port_otg = false,
 	.has_hostpc = true,
 	.unaligned_dma_buf_supported = false,
 	.phy_intf = TEGRA_USB_PHY_INTF_UTMI,
@@ -591,11 +609,11 @@ static struct tegra_usb_platform_data tegra_udc_pdata = {
 };
 
 static struct tegra_usb_platform_data tegra_ehci1_utmi_pdata = {
-	.port_otg = true,
+	.port_otg = false,
 	.has_hostpc = true,
 	.unaligned_dma_buf_supported = false,
 	.phy_intf = TEGRA_USB_PHY_INTF_UTMI,
-	.op_mode = TEGRA_USB_OPMODE_HOST,
+	.op_mode = TEGRA_USB_OPMODE_DEVICE,
 	.u_data.host = {
 		.vbus_gpio = -1,
 		.hot_plug = false,
@@ -1041,8 +1059,8 @@ struct spi_board_info maxim_sti_spi_board = {
 
 static __initdata struct tegra_clk_init_table touch_clk_init_table[] = {
 	/* name         parent          rate            enabled */
-	{ "extern2",    "pll_p",        41000000,       false},
-	{ "clk_out_2",  "extern2",      40800000,       false},
+	{ "extern3",    "clk_m",        12000000,       true},
+	{ "clk_out_3",  "extern3",      12000000,       true},
 	{ NULL,         NULL,           0,              0},
 };
 
@@ -1310,6 +1328,7 @@ static void __init tegra_ardbeg_late_init(void)
 		ardbeg_sata_init();
 	else
 		arbdeg_sata_clk_gate();
+
 	if (board_info.board_id == BOARD_PM359 ||
 			board_info.board_id == BOARD_PM358 ||
 			board_info.board_id == BOARD_PM370 ||
@@ -1320,6 +1339,7 @@ static void __init tegra_ardbeg_late_init(void)
 	else if (board_info.board_id == BOARD_PM374)
 		norrin_regulator_init();
 	else
+
 		ardbeg_regulator_init();
 	ardbeg_dtv_init();
 	ardbeg_suspend_init();
@@ -1361,15 +1381,31 @@ static void __init tegra_ardbeg_late_init(void)
 	tegra_wdt_recovery_init();
 #endif
 
-	ardbeg_sensors_init();
-
 	ardbeg_soctherm_init();
+
+	//ardbeg_sensors_init();
 
 	ardbeg_setup_bluedroid_pm();
 	tegra_register_fuse();
 
 	ardbeg_sysedp_dynamic_capping_init();
 	ardbeg_sysedp_batmon_init();
+
+	do {
+		struct clk* clk;
+		printk(KERN_ERR "Configuring clk3\n");
+                tegra_clk_init_from_table(touch_clk_init_table);
+ 
+		clk = clk_get_sys("clk_out_3", "extern3");
+		if ( !clk )
+		{
+			printk(KERN_ERR "Could not get clk_out_3\n");
+			break;
+		}
+		//clk_disable(clk);
+		//clk_set_rate(clk, 800000);
+		clk_enable(clk);
+	} while(0);
 }
 
 static void __init tegra_ardbeg_init_early(void)

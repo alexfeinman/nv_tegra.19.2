@@ -82,17 +82,20 @@ static int tegra_dc_ext_get_window(struct tegra_dc_ext_user *user,
 	struct tegra_dc_ext *ext = user->ext;
 	struct tegra_dc_ext_win *win;
 	int ret = 0;
-
-	if ((n >= DC_N_WINDOWS) || !(ext->dc->valid_windows & BIT(n)))
+//trace_printk("window %d\n", n);
+	if ((n >= DC_N_WINDOWS) || !(ext->dc->valid_windows & BIT(n))) {
+		printk(KERN_ERR "%s: n=%d, DC_N_WINDOWS=%d, valid_windows=%lx\n", __func__, n, DC_N_WINDOWS, ext->dc->valid_windows);
 		return -EINVAL;
+	}
 
 	win = &ext->win[n];
 
 	mutex_lock(&win->lock);
 
-	if (!win->user)
+	//if (!win->user)
 		win->user = user;
-	else if (win->user != user)
+	//else 
+	if (win->user != user)
 		ret = -EBUSY;
 
 	mutex_unlock(&win->lock);
@@ -107,6 +110,7 @@ static int tegra_dc_ext_put_window(struct tegra_dc_ext_user *user,
 	struct tegra_dc_ext_win *win;
 	int ret = 0;
 
+//trace_printk("window %d\n", n);
 	if ((n >= DC_N_WINDOWS) || !(ext->dc->valid_windows & BIT(n)))
 		return -EINVAL;
 
@@ -215,6 +219,19 @@ fail:
 static void tegra_dc_ext_set_windowattr_basic(struct tegra_dc_win *win,
 		       const struct tegra_dc_ext_flip_windowattr *flip_win)
 {
+#if 0
+trace_printk("window %d req blend: %08x, w: %d,%d:%d,%d out: %d,%d:%d,%d, z:%d\n", win->idx, flip_win->blend,
+	flip_win->x >> 12,
+	flip_win->y >> 12,
+	flip_win->w >> 12,
+	flip_win->h >> 12,
+	flip_win->out_x,
+	flip_win->out_y,
+	flip_win->out_w,
+	flip_win->out_h,
+	flip_win->z
+	);
+#endif
 	win->flags = TEGRA_WIN_FLAG_ENABLED;
 	if (flip_win->blend == TEGRA_DC_EXT_BLEND_PREMULT)
 		win->flags |= TEGRA_WIN_FLAG_BLEND_PREMULT;
@@ -282,6 +299,11 @@ static int tegra_dc_ext_set_windowattr(struct tegra_dc_ext *ext,
 	memcpy(ext_win->cur_handle, flip_win->handle,
 	       sizeof(ext_win->cur_handle));
 
+//trace_printk("w:%d old: %p %p %p, new: %p %p %p\n", win->idx, win->phys_addr, win->phys_addr_u, win->phys_addr_v,
+//	flip_win->phys_addr + flip_win->attr.offset, 
+//	(flip_win->handle[TEGRA_DC_U] ? flip_win->phys_addr_u : flip_win->phys_addr) + flip_win->attr.offset_u,
+//	(flip_win->handle[TEGRA_DC_V] ? flip_win->phys_addr_v : flip_win->phys_addr) + flip_win->attr.offset_v);
+
 	/* XXX verify that this won't read outside of the surface */
 	win->phys_addr = flip_win->phys_addr + flip_win->attr.offset;
 
@@ -292,7 +314,6 @@ static int tegra_dc_ext_set_windowattr(struct tegra_dc_ext *ext,
 	win->phys_addr_v = flip_win->handle[TEGRA_DC_V] ?
 		flip_win->phys_addr_v : flip_win->phys_addr;
 	win->phys_addr_v += flip_win->attr.offset_v;
-
 
 #if defined(CONFIG_TEGRA_DC_INTERLACE)
 	if (ext->dc->mode.vmode == FB_VMODE_INTERLACED) {
@@ -516,6 +537,7 @@ static void tegra_dc_ext_flip_worker(struct work_struct *work)
 		kfree(unpin_handles[i]);
 	}
 
+//trace_printk("Completed flip for %d window(s), starting with %d\n", win_num, data->win[0].attr.index);
 	kfree(data);
 }
 
@@ -703,7 +725,8 @@ static int tegra_dc_ext_flip(struct tegra_dc_ext_user *user,
 	__u32 post_sync_val, post_sync_id = NVSYNCPT_INVALID;
 	int i, ret = 0;
 	bool has_timestamp = false;
-
+ktime_t now = ktime_get();
+//trace_printk("Submitted flip for %d window(s), starting with %d\n", win_num, win[0].index);
 	/* If display has been disconnected return with error. */
 	if (!ext->dc->connected)
 		return -1;
@@ -790,12 +813,13 @@ static int tegra_dc_ext_flip(struct tegra_dc_ext_user *user,
 		mutex_unlock(&ext->win[work_index].queue_lock);
 	}
 #ifdef CONFIG_ANDROID
-	work_index = 0;
+	//work_index = 0;
 #endif
 	queue_work(ext->win[work_index].flip_wq, &data->work);
 
 	unlock_windows_for_flip(user, win, win_num);
 
+//trace_printk("%lld us\n", ktime_us_delta(ktime_get(), now));
 	return 0;
 
 unlock:
@@ -818,7 +842,6 @@ fail_pin:
 		}
 	}
 	kfree(data);
-
 	return ret;
 }
 

@@ -114,7 +114,8 @@ static int pin_config_set_for_pin(struct pinctrl_dev *pctldev, unsigned pin,
 {
 	const struct pinconf_ops *ops = pctldev->desc->confops;
 	int ret;
-
+trace_printk("pin %d, config: %lx\n", pin, config);
+printk("%s: pin %d, config: %lx\n", __func__, pin, config);
 	if (!ops || !ops->pin_config_set) {
 		dev_err(pctldev->dev, "cannot configure pin, missing "
 			"config function in driver\n");

@@ -206,6 +206,7 @@ static struct tegra_dc_sd_settings sd_settings;
 static struct tegra_dc_out ardbeg_disp1_out = {
 	.type		= TEGRA_DC_OUT_DSI,
 	.sd_settings	= &sd_settings,
+	.parent_clk	= "pll_d2",
 };
 #endif
 
@@ -515,12 +516,17 @@ static struct tegra_panel *ardbeg_panel_configure(struct board_info *board_out,
 	u8 *dsi_instance_out)
 {
 	struct tegra_panel *panel = NULL;
-	u8 dsi_instance = DSI_INSTANCE_0;
+	u8 dsi_instance = DSI_INSTANCE_1;
 	struct board_info boardtmp;
 
 	if (!board_out)
 		board_out = &boardtmp;
 	tegra_get_display_board_info(board_out);
+
+	pr_err("Display board: %d (%x)\n", board_out->board_id, board_out->board_id);
+
+	board_out->board_id = BOARD_PM366;
+	//board_out->board_id = 42;
 
 	switch (board_out->board_id) {
 	case BOARD_E1639:
@@ -575,8 +581,8 @@ static struct tegra_panel *ardbeg_panel_configure(struct board_info *board_out,
 		break;
 	default:
 		panel = &dsi_p_wuxga_10_1;
-		tegra_io_dpd_enable(&dsic_io);
-		tegra_io_dpd_enable(&dsid_io);
+		tegra_io_dpd_disable(&dsic_io);
+		tegra_io_dpd_disable(&dsid_io);
 		break;
 	}
 	if (dsi_instance_out)
@@ -786,7 +792,7 @@ int __init ardbeg_display_init(void)
 			printk(KERN_ERR "disp1 panel output not specified!\n");
 	}
 
-	printk(KERN_DEBUG "disp1 pclk=%ld\n", disp1_rate);
+	printk(KERN_ERR "disp1 pclk=%ld\n", disp1_rate);
 	if (disp1_rate)
 		tegra_dvfs_resolve_override(disp1_clk, disp1_rate);
 #endif

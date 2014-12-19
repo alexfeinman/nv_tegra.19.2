@@ -27,7 +27,8 @@ struct tegra_camera_buffer {
 	struct vb2_buffer		vb; /* v4l buffer must be first */
 	struct list_head		queue;
 	struct soc_camera_device	*icd;
-	int				output_channel;
+	int						output_channel;
+	int						status;
 
 	/*
 	 * Various buffer addresses shadowed so we don't have to recalculate
@@ -80,40 +81,43 @@ struct tegra_camera_dev {
 	struct platform_device		*ndev;
 	struct nvhost_device_data	*ndata;
 
-	struct regulator		*reg;
-	const char			*regulator_name;
+	struct regulator			*reg;
+	const char					*regulator_name;
 
 	struct tegra_camera_clk		*clks;
-	int				num_clks;
+	int							num_clks;
 
 	struct tegra_camera_ops		*ops;
 
-	void __iomem			*reg_base;
-	spinlock_t			videobuf_queue_lock;
-	struct list_head		capture;
-	struct vb2_buffer		*active;
+	void __iomem				*reg_base;
+	spinlock_t					videobuf_queue_lock;
+	struct list_head			capture;
+	struct vb2_buffer			*active;
+	struct vb2_buffer			*pending;
 	struct vb2_alloc_ctx		*alloc_ctx;
-	enum v4l2_field			field;
-	int				sequence_a;
-	int				sequence_b;
+	enum v4l2_field				field;
+	int							sequence_a;
+	int							sequence_b;
 
-	struct work_struct		work;
-	struct mutex			work_mutex;
+	struct work_struct			work;
+	struct mutex				work_mutex;
 
-	u32				syncpt_csi_a;
-	u32				syncpt_csi_b;
-	u32				syncpt_vip;
+	u32							syncpt_csi_a;
+	u32							syncpt_csi_b;
+	u32							syncpt_vip;
+	u32							syncpt_id_csi_a;
+	u32							syncpt_id_csi_b;
 
 	/* Debug */
-	int				num_frames;
-	int				enable_refcnt;
+	int							num_frames;
+	int							enable_refcnt;
 
 	/* Test Pattern Generator mode */
-	int				tpg_mode;
+	int							tpg_mode;
 
-	int				sof;
-	struct clk		*clk_mipi_cal;
-	struct clk		*clk_72mhz;
+	int							sof;
+	struct clk					*clk_mipi_cal;
+	struct clk					*clk_72mhz;
 };
 
 #define TC_VI_REG_RD(dev, offset) readl(dev->reg_base + offset)
