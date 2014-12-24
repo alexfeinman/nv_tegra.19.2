@@ -298,6 +298,7 @@ static inline unsigned long tegra_dc_clk_get_rate(struct tegra_dc *dc)
 #if !defined(CONFIG_ARCH_TEGRA_2x_SOC) && !defined(CONFIG_ARCH_TEGRA_3x_SOC)
 static inline void tegra_dc_powergate_locked(struct tegra_dc *dc)
 {
+	return;
 	tegra_powergate_partition(dc->powergate_id);
 }
 

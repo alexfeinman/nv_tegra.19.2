@@ -24,6 +24,7 @@
 #include <linux/debugfs.h>
 #include <linux/clk/tegra.h>
 
+#include <mach/../../clock.h>
 #include <mach/dc.h>
 
 #include "sor.h"
@@ -942,6 +943,7 @@ void tegra_dc_sor_enable_lvds(struct tegra_dc_sor_data *sor,
 {
 	u32 reg_val;
 
+	tegra_sor_clk_enable(sor);
 	tegra_dc_sor_enable_dc(sor);
 	tegra_dc_sor_config_panel(sor, true);
 	tegra_dc_writel(sor->dc, 0x9f00, DC_CMD_STATE_CONTROL);
@@ -1162,11 +1164,14 @@ void tegra_dc_sor_setup_clk(struct tegra_dc_sor_data *sor, struct clk *clk,
 	parent_clk = clk_get_parent(clk);
 	BUG_ON(!parent_clk);
 
-	if (sor->dc->mode.pclk != clk_get_rate(parent_clk))
+	if (sor->dc->mode.pclk != clk_get_rate(parent_clk)) {
+		pr_err("Attempting to change rate for %s from %lu t %lu\n", parent_clk->name, clk_get_rate(parent_clk), sor->dc->mode.pclk);
 		clk_set_rate(parent_clk, sor->dc->mode.pclk);
+	}
 
 	/* Only enable safe clock initially */
 	tegra_clk_cfg_ex(sor->sor_clk, TEGRA_CLK_SOR_CLK_SEL, 0);
+//	tegra_sor_clk_enable(sor);
 }
 
 void tegra_sor_precharge_lanes(struct tegra_dc_sor_data *sor)

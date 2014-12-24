@@ -36,6 +36,13 @@
 #include <linux/tegra-soc.h>
 #include <linux/nvhost.h>
 #include <linux/of_address.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/clk/tegra.h>
+
+#include "mach/../../clock.h"
+
 
 #include <mach/dc.h>
 #include <mach/fb.h>
@@ -381,8 +388,10 @@ static inline void tegra_dsi_lp_clk_disable(struct tegra_dc_dsi_data *dsi);
 void tegra_dsi_clk_enable(struct tegra_dc_dsi_data *dsi)
 {
 	int i = 0;
+pr_err("%s\n", __func__);
 	for (i = 0; i < dsi->max_instances; i++) {
 		clk_prepare_enable(dsi->dsi_clk[i]);
+pr_err("%s: enabling clock %s\n", __func__, dsi->dsi_clk[i]->name);
 		udelay(800);
 	}
 }
@@ -390,6 +399,8 @@ void tegra_dsi_clk_enable(struct tegra_dc_dsi_data *dsi)
 void tegra_dsi_clk_disable(struct tegra_dc_dsi_data *dsi)
 {
 	int i = 0;
+pr_err("%s\n", __func__);
+	return;
 	for (i = 0; i < dsi->max_instances; i++) {
 		clk_disable_unprepare(dsi->dsi_clk[i]);
 		udelay(800);
@@ -679,6 +690,7 @@ static void tegra_dsi_init_sw(struct tegra_dc *dc,
 	/* Round up to multiple of mega hz. */
 	plld_clk_mhz = DIV_ROUND_UP((byte_clk_hz * NUMOF_BIT_PER_BYTE),
 								1000000);
+	pr_err("Calculated plld clk (mhz) for byte clk (hz) %u : %u\n", plld_clk_mhz, byte_clk_hz);
 
 	/* Calculate default real shift_clk_div. */
 	dsi->default_shift_clk_div.mul = NUMOF_BIT_PER_BYTE *
@@ -3820,8 +3832,11 @@ static void tegra_dc_dsi_enable(struct tegra_dc *dc)
 	struct tegra_dc_dsi_data *dsi = tegra_dc_get_outdata(dc);
 	int err = 0;
 
+pr_err("%s\n", __func__);
 	mutex_lock(&dsi->lock);
 	tegra_dc_io_start(dc);
+	tegra_unpowergate_partition(TEGRA_POWERGATE_DISA);
+	tegra_unpowergate_partition(TEGRA_POWERGATE_DISB);
 
 	/*
 	 * Do not program this panel as the bootloader as has already
@@ -3917,18 +3932,36 @@ static void tegra_dc_dsi_enable(struct tegra_dc *dc)
 		dsi->enabled = true;
 	}
 
-	if (dsi->out_ops && dsi->out_ops->enable)
-		dsi->out_ops->enable(dsi);
 fail:
 	tegra_dc_io_end(dc);
 	mutex_unlock(&dsi->lock);
 }
+
+static void tegra_dc_dsi_init_bridge(struct tegra_dc_dsi_data *dsi) {
+	int ret = 0;
+pr_err("%s\n", __func__);
+	if (dsi->info.dsi2lvds_bridge_enable)
+		dsi->out_ops = &tegra_dsi2lvds_ops;
+	else if (dsi->info.dsi2edp_bridge_enable)
+		dsi->out_ops = &tegra_dsi2edp_ops;
+	else
+		dsi->out_ops = NULL;
+pr_err("Calling dsi2lvds->init\n");
+	if (dsi->out_ops && dsi->out_ops->init)
+		ret = dsi->out_ops->init(dsi);
+pr_err("Result: %d\n", ret);
+
+	if (dsi->out_ops && dsi->out_ops->enable)
+		dsi->out_ops->enable(dsi);
+}
+
 
 static void tegra_dc_dsi_postpoweron(struct tegra_dc *dc)
 {
 	struct tegra_dc_dsi_data *dsi = tegra_dc_get_outdata(dc);
 	int err = 0;
 
+pr_err("%s\n", __func__);
 	/*
 	 * Do not configure. Use bootloader configuration.
 	 * This avoids periods of blanking during boot.
@@ -3963,6 +3996,7 @@ static void tegra_dc_dsi_postpoweron(struct tegra_dc *dc)
 			tegra_dsi_start_dc_stream(dc, dsi);
 
 		dsi->host_suspended = false;
+		tegra_dc_dsi_init_bridge(dsi);
 	}
 fail:
 	tegra_dc_io_end(dc);
@@ -3976,16 +4010,6 @@ static void __tegra_dc_dsi_init(struct tegra_dc *dc)
 #ifdef CONFIG_DEBUG_FS
 	tegra_dc_dsi_debug_create(dsi);
 #endif
-
-	if (dsi->info.dsi2lvds_bridge_enable)
-		dsi->out_ops = &tegra_dsi2lvds_ops;
-	else if (dsi->info.dsi2edp_bridge_enable)
-		dsi->out_ops = &tegra_dsi2edp_ops;
-	else
-		dsi->out_ops = NULL;
-
-	if (dsi->out_ops && dsi->out_ops->init)
-		dsi->out_ops->init(dsi);
 
 	tegra_dsi_init_sw(dc, dsi);
 }
@@ -4155,8 +4179,8 @@ static int _tegra_dc_dsi_init(struct tegra_dc *dc)
 	struct tegra_dsi_out *dsi_pdata;
 	int err = 0, i;
 	char *ganged_reg_name[2] = {"ganged_dsia_regs", "ganged_dsib_regs"};
-	char *dsi_clk_name[2] = {"dsia", "dsib"};
-	char *dsi_lp_clk_name[2] = {"dsialp", "dsiblp"};
+	char *dsi_clk_name[2] = {"dsib", "dsib"};
+	char *dsi_lp_clk_name[2] = {"dsiblp", "dsiblp"};
 	struct device_node *np = dc->ndev->dev.of_node;
 #ifdef CONFIG_USE_OF
 	struct device_node *np_dsi =
@@ -4505,7 +4529,7 @@ static int _tegra_dsi_host_resume(struct tegra_dc *dc,
 	}
 
 	tegra_dvfs_set_rate(dc->clk, dc->mode.pclk);
-
+	tegra_dc_dsi_init_bridge(dsi);
 	return 0;
 fail:
 	return err;
@@ -4710,6 +4734,7 @@ static int tegra_dsi_host_resume(struct tegra_dc *dc)
 fail:
 	tegra_dc_io_end(dc);
 	mutex_unlock(&dsi->host_lock);
+	tegra_dc_dsi_init_bridge(dsi);
 	return err;
 }
 
@@ -4810,8 +4835,11 @@ static void tegra_dc_dsi_resume(struct tegra_dc *dc)
 	 * will reconfigure the controller from scratch
 	 */
 
+	tegra_dc_dsi_init_bridge(dsi);
+
 	 if (dsi->out_ops && dsi->out_ops->resume)
 		dsi->out_ops->resume(dsi);
+
 }
 #endif
 
@@ -4888,7 +4916,7 @@ static long tegra_dc_dsi_setup_clk(struct tegra_dc *dc, struct clk *clk)
 	} else {
 		if (dc->pdata->default_out->dsi->dsi_instance) {
 			parent_clk = clk_get_sys(NULL,
-				dc->out->parent_clk ? : "pll_d2_out0");
+				dc->out->parent_clk ? : "pll_d_out0");
 			base_clk = clk_get_parent(parent_clk);
 		} else {
 			parent_clk = clk_get_sys(NULL,

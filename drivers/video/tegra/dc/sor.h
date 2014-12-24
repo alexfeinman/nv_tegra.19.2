@@ -141,6 +141,11 @@ static inline u32 tegra_sor_readl(struct tegra_dc_sor_data *sor, u32 reg)
 	return reg_val;
 }
 
+static inline void tegra_sor_clk_enable(struct tegra_dc_sor_data *sor)
+{
+    clk_prepare_enable(sor->sor_clk);
+}
+
 static inline void tegra_sor_writel(struct tegra_dc_sor_data *sor,
 	u32 reg, u32 val)
 {

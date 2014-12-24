@@ -323,6 +323,7 @@ static int tegra_fb_blank(int blank, struct fb_info *info)
 	case FB_BLANK_VSYNC_SUSPEND:
 	case FB_BLANK_HSYNC_SUSPEND:
 	case FB_BLANK_POWERDOWN:
+		return 0;
 		dev_dbg(&tegra_fb->ndev->dev, "blank - powerdown\n");
 		/* To pan fb while switching from X */
 		if (!tegra_fb->win->dc->suspended && tegra_fb->win->dc->enabled)
@@ -711,7 +712,7 @@ printk(KERN_ERR "%s: bpp=%d\n", __func__, fb_data->bits_per_pixel);
 
 	tegra_fb->info = info;
 
-	dev_info(&ndev->dev, "probed\n");
+	dev_info(&ndev->dev, "fb: probed\n");
 
 	if (fb_data->flags & TEGRA_FB_FLIP_ON_PROBE) {
 		tegra_dc_update_windows(&tegra_fb->win, 1);

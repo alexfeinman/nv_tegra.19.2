@@ -3016,7 +3016,7 @@ static int tegra_dc_probe(struct platform_device *ndev)
 
 	tegra_dc_create_debugfs(dc);
 
-	dev_info(&ndev->dev, "probed\n");
+	dev_info(&ndev->dev, "dc: probed\n");
 
 	if (dc->pdata->fb) {
 		if (dc->enabled && dc->pdata->fb->bits_per_pixel == -1) {
@@ -3060,10 +3060,11 @@ static int tegra_dc_probe(struct platform_device *ndev)
 
 	/* Powergate display module when it's unconnected. */
 	/* detect() function, if presetns, responsible for the powergate */
+/*
 	if (!tegra_dc_get_connected(dc) &&
 			!(dc->out_ops && dc->out_ops->detect))
 		tegra_dc_powergate_locked(dc);
-
+*/
 	tegra_dc_create_sysfs(&dc->ndev->dev);
 
 	return 0;

@@ -412,6 +412,9 @@ struct tegra_dc_ext_feature {
 #define TEGRA_DC_EXT_FLIP3 \
 	_IOWR('D', 0x14, struct tegra_dc_ext_flip_3)
 
+#define TEGRA_DC_EXT_DSI_INIT \
+	_IO('D', 0x15)
+
 enum tegra_dc_ext_control_output_type {
 	TEGRA_DC_EXT_DSI,
 	TEGRA_DC_EXT_LVDS,

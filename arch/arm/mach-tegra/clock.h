@@ -364,6 +364,7 @@ void tegra_clk_preset_emc_monitor(unsigned long rate);
 void tegra_periph_clk_safe_rate_init(struct clk *c);
 void tegra_clk_verify_parents(void);
 void clk_init(struct clk *clk);
+void tegra_clk_set_disabled_div_all(void);
 unsigned long tegra_clk_measure_input_freq(void);
 unsigned long clk_get_rate_locked(struct clk *c);
 void tegra_clk_init_cbus_plls_from_table(struct tegra_clk_init_table *table);
@@ -380,6 +381,8 @@ long clk_round_rate_locked(struct clk *c, unsigned long rate);
 int tegra_clk_shared_bus_update(struct clk *c);
 void tegra3_set_cpu_skipper_delay(int delay);
 unsigned long tegra_clk_measure_input_freq(void);
+int clk_enable_locked(struct clk *c);
+void clk_disable_locked(struct clk *c);
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
 static inline bool tegra_clk_is_parent_allowed(struct clk *c, struct clk *p)
 { return true; }

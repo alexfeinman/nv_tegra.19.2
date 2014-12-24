@@ -50,7 +50,7 @@
 /* Global data of Tegra CPU CAR ops */
 struct tegra_cpu_car_ops *tegra_cpu_car_ops;
 
-#define DISABLE_BOOT_CLOCKS 1
+#define DISABLE_BOOT_CLOCKS 0
 
 /*
  * Locking:
@@ -261,7 +261,7 @@ void clk_init(struct clk *c)
 	mutex_unlock(&clock_list_lock);
 }
 
-static int clk_enable_locked(struct clk *c)
+int clk_enable_locked(struct clk *c)
 {
 	int ret = 0;
 
@@ -296,7 +296,7 @@ static int clk_enable_locked(struct clk *c)
 	return ret;
 }
 
-static void clk_disable_locked(struct clk *c)
+void clk_disable_locked(struct clk *c)
 {
 	if (c->refcnt == 0) {
 		WARN(1, "Attempting to disable clock %s with refcnt 0", c->name);
@@ -984,6 +984,21 @@ void __init tegra_clk_verify_parents(void)
 	}
 	mutex_unlock(&clock_list_lock);
 }
+
+void __init tegra_clk_set_disabled_div_all(void)
+{
+    struct clk *c;
+#if 0
+    mutex_lock(&clock_list_lock);
+
+    list_for_each_entry(c, &clocks, node) {
+        if (c->flags & PERIPH_DIV)
+            c->set_disabled_div = true;
+    }
+#endif
+    mutex_unlock(&clock_list_lock);
+}
+//EXPORT_SYMBOL(tegra_clk_set_disabled_div_all);
 
 static bool tegra_keep_boot_clocks = false;
 static int __init tegra_keep_boot_clocks_setup(char *__unused)
