@@ -144,6 +144,4 @@ source "drivers/staging/nvshm/Kconfig"
 
 source "drivers/staging/pasr/Kconfig"
 
-source "drivers/staging/lattice_ir/Kconfig"
-
 endif # STAGING
