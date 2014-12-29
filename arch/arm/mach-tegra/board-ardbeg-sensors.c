@@ -32,8 +32,13 @@
 #include <media/camera.h>
 #include <media/ar0261.h>
 #include <media/imx135.h>
+
+#if IS_ENABLED(CONFIG_SOC_CAMERA_TC358743)
 #include <media/tc358743.h>
+#endif
+#if IS_ENABLED(CONFIG_SOC_CAMERA_UH2C)
 #include <media/uh2c.h>
+#endif
 #include <media/dw9718.h>
 #include <media/as364x.h>
 #include <media/ov5693.h>
@@ -576,6 +581,7 @@ struct imx135_platform_data ardbeg_imx135_data = {
 	.power_off = ardbeg_imx135_power_off,
 };
 
+#if IS_ENABLED(CONFIG_SOC_CAMERA_UH2C)
 static int ardbeg_uh2c_get_extra_regulators(struct uh2c_power_rail *pw)
 {
 	if (!pw->ext_reg1) {
@@ -681,7 +687,7 @@ struct uh2c_platform_data ardbeg_uh2c_data = {
 	.power_on = ardbeg_uh2c_power_on,
 	.power_off = ardbeg_uh2c_power_off,
 };
-
+#endif
 static int ardbeg_dw9718_power_on(struct dw9718_power_rail *pw)
 {
 	int err;
